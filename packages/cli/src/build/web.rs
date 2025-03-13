@@ -57,7 +57,7 @@ impl AppBundle {
             writeln!(
                 &mut head_resources,
                 "<link rel=\"stylesheet\" href=\"{}\">",
-                &style.to_str().unwrap(),
+                asset!(&style.to_str().unwrap()).to_string(),
             )?;
         }
 
@@ -66,7 +66,7 @@ impl AppBundle {
             writeln!(
                 &mut head_resources,
                 "<script src=\"{}\"></script>",
-                &script.to_str().unwrap(),
+                asset!(&script.to_str().unwrap()).to_string(),
             )?;
         }
 
@@ -78,10 +78,10 @@ impl AppBundle {
         }
 
         if !style_list.is_empty() {
-            self.send_resource_deprecation_warning(style_list, ResourceType::Style);
+            // self.send_resource_deprecation_warning(style_list, ResourceType::Style);
         }
         if !script_list.is_empty() {
-            self.send_resource_deprecation_warning(script_list, ResourceType::Script);
+            // self.send_resource_deprecation_warning(script_list, ResourceType::Script);
         }
 
         // Inject any resources from manganis into the head
@@ -203,53 +203,53 @@ r#" <script>
         *html = html.replace("{app_name}", app_name);
     }
 
-    fn send_resource_deprecation_warning(&self, paths: Vec<PathBuf>, variant: ResourceType) {
-        const RESOURCE_DEPRECATION_MESSAGE: &str = r#"The `web.resource` config has been deprecated in favor of head components and will be removed in a future release. Instead of including assets in the config, you can include assets with the `asset!` macro and add them to the head with `document::Link` and `Script` components."#;
+    // fn send_resource_deprecation_warning(&self, paths: Vec<PathBuf>, variant: ResourceType) {
+    //     const RESOURCE_DEPRECATION_MESSAGE: &str = r#"The `web.resource` config has been deprecated in favor of head components and will be removed in a future release. Instead of including assets in the config, you can include assets with the `asset!` macro and add them to the head with `document::Link` and `Script` components."#;
 
-        let replacement_components = paths
-            .iter()
-            .map(|path| {
-                let path = if path.exists() {
-                    path.to_path_buf()
-                } else {
-                    // If the path is absolute, make it relative to the current directory before we join it
-                    // The path is actually a web path which is relative to the root of the website
-                    let path = path.strip_prefix("/").unwrap_or(path);
-                    let asset_dir_path = self
-                        .build
-                        .krate
-                        .legacy_asset_dir()
-                        .map(|dir| dir.join(path).canonicalize());
+    //     let replacement_components = paths
+    //         .iter()
+    //         .map(|path| {
+    //             let path = if path.exists() {
+    //                 path.to_path_buf()
+    //             } else {
+    //                 // If the path is absolute, make it relative to the current directory before we join it
+    //                 // The path is actually a web path which is relative to the root of the website
+    //                 let path = path.strip_prefix("/").unwrap_or(path);
+    //                 let asset_dir_path = self
+    //                     .build
+    //                     .krate
+    //                     .legacy_asset_dir()
+    //                     .map(|dir| dir.join(path).canonicalize());
 
-                    if let Some(Ok(absolute_path)) = asset_dir_path {
-                        let absolute_crate_root =
-                            self.build.krate.crate_dir().canonicalize().unwrap();
-                        PathBuf::from("./")
-                            .join(absolute_path.strip_prefix(absolute_crate_root).unwrap())
-                    } else {
-                        path.to_path_buf()
-                    }
-                };
-                match variant {
-                    ResourceType::Style => {
-                        format!("    Stylesheet {{ href: asset!(\"{}\") }}", path.display())
-                    }
-                    ResourceType::Script => {
-                        format!("    Script {{ src: asset!(\"{}\") }}", path.display())
-                    }
-                }
-            })
-            .collect::<Vec<_>>();
-        let replacement_components = format!("rsx! {{\n{}\n}}", replacement_components.join("\n"));
-        let section_name = match variant {
-            ResourceType::Style => "web.resource.style",
-            ResourceType::Script => "web.resource.script",
-        };
+    //                 if let Some(Ok(absolute_path)) = asset_dir_path {
+    //                     let absolute_crate_root =
+    //                         self.build.krate.crate_dir().canonicalize().unwrap();
+    //                     PathBuf::from("./")
+    //                         .join(absolute_path.strip_prefix(absolute_crate_root).unwrap())
+    //                 } else {
+    //                     path.to_path_buf()
+    //                 }
+    //             };
+    //             match variant {
+    //                 ResourceType::Style => {
+    //                     format!("    Stylesheet {{ href: asset!(\"{}\") }}", path.display())
+    //                 }
+    //                 ResourceType::Script => {
+    //                     format!("    Script {{ src: asset!(\"{}\") }}", path.display())
+    //                 }
+    //             }
+    //         })
+    //         .collect::<Vec<_>>();
+    //     let replacement_components = format!("rsx! {{\n{}\n}}", replacement_components.join("\n"));
+    //     let section_name = match variant {
+    //         ResourceType::Style => "web.resource.style",
+    //         ResourceType::Script => "web.resource.script",
+    //     };
 
-        tracing::warn!(
-            "{RESOURCE_DEPRECATION_MESSAGE}\nTo migrate to head components, remove `{section_name}` and include the following rsx in your root component:\n```rust\n{replacement_components}\n```"
-        );
-    }
+    //     tracing::warn!(
+    //         "{RESOURCE_DEPRECATION_MESSAGE}\nTo migrate to head components, remove `{section_name}` and include the following rsx in your root component:\n```rust\n{replacement_components}\n```"
+    //     );
+    // }
 }
 
 enum ResourceType {
